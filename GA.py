@@ -70,10 +70,30 @@ class WalkOver:
         self.path[nodePosition] = node
         self.fitness = 0.0
 
+    def pathSize(self):
+        return len(self.path)
+
+    def containsNode(self, node):
+        return node in self.path
 
     def generateIndividual(self):
         for nodeIndex in range(0, self.pathManager.numberOfNodes()):
             self.setNode(nodeIndex, self.nodeManager.getNode(nodeIndex))
         random.shuffle(self.path)
+    
+    def getFitness(self):
+        if self.fitness == 0:
+            self.fitness = 1/float(self.getDistance)
+        return self.fitness
 
+    def allUnique(self):
+        seen = set()
+        return not any(i in seen or seen.add(i) for i in self.path)
 
+    def calculateFitness(self):
+        score = 0
+        allNodes = len(graph)
+        if self.pathSize == allNodes:
+            score = score + 10
+        if self.allUnique():
+            score = score + 10
