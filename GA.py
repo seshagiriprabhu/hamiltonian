@@ -3,6 +3,9 @@
 
 import math
 import random
+import matplotlib.pyplot as plt
+import networkx as nx
+
 
 graphs = {1: [2, 4,5],
         2: [1, 3,5],
@@ -46,7 +49,7 @@ class PathManager:
         self.pathNodes.append(node)
 
     def getNode(self, index):
-        self.pathNodes[index]
+        return self.pathNodes[index]
 
     def numberOfNodes(self):
         return len(self.pathNodes)
@@ -57,7 +60,7 @@ class WalkOver:
         self.pathManager = pathManager
         self.path = []
         self.fitness = 0.0
-        
+
         if path is not None:
             self.path = path
         else:
@@ -98,8 +101,8 @@ class WalkOver:
         random.shuffle(self.path)
     
     def getFitness(self):
-        if self.fitness == 0:
-            self.fitness = self.calculateFitness()/40
+        if self.fitness == 0.0:
+            self.fitness = float(self.calculateFitness())/40
         return self.fitness
     
     def checkLastElementCycle(self):
@@ -107,8 +110,8 @@ class WalkOver:
         Check if the last node in the path and the first node in the path has
         connection
         """
-        last = self.path[len(self.path)-1]
-        first = self.path[0]
+        last = self.getNode(len(self.path)-1)
+        first = self.getNode(0)
         if first in last.getAdjacent():
             return True
         else: return False
@@ -117,9 +120,9 @@ class WalkOver:
         """
         Check if all the nodes in the path are connected
         """
-        for i in range(len(self.path)):
-            if i + 1 < len(self.path):
-                if not self.path[i+1] in graph.get(self.path[i]):
+        for i in range(self.pathSize()):
+            if i + 1 < self.pathSize():
+                if not self.path[i+1].getIndex() in self.path[i].getAdjacent():
                     return False
         return True
 
@@ -132,8 +135,7 @@ class WalkOver:
 
     def calculateFitness(self):
         score = 0
-        allNodes = len(graph)
-        if self.pathSize() == allNodes:
+        if self.pathSize() == pathManager.numberOfNodes():
             score = score + 10
         if self.checkAllUnique():
             score = score + 10
@@ -206,7 +208,7 @@ class GA:
         return newPopulation
 
     def crossover(self, parent1, parent2):
-        child = Path(self.pathManager)
+        child = WalkOver(self.pathManager)
         
         startPos = int(random.random() * parent1.pathSize())
         endPos = int(random.random() * parent2.pathSize())
@@ -234,9 +236,9 @@ class GA:
 
                 node1 = path.getNode(pathPos1)
                 node2 = path.getNode(pathPos2)
-
-                path.setNode(pathPos1, node1)
-                path.setNode(pathPos2, node2)
+                
+                path.setNode(pathPos2, node1)
+                path.setNode(pathPos1, node2)
 
     def tournamentSelection(self, pop):
         tournament = Population(self.pathManager, self.tournamentSize, False)
@@ -246,16 +248,40 @@ class GA:
         fittest = tournament.getFittest()
         return fittest
 
-if __name__=="__main__":
-    pathManager = PathManager()
+def draw_graph(nodelist, edgelist):
+    labels = {}
+    for i in range(len(nodelist)): 
+        labels[i+1]=nodelist[i]
+    G=nx.Graph()
+    G.add_nodes_from(nodelist)
+    G.add_edges_from(edgelist)
+    pos=nx.spectral_layout(G)
+    nx.draw_networkx_nodes(G, pos, nodelist=nodelist, node_color='r', node_size=500, alpha=0.8)
+    nx.draw_networkx_edges(G, pos, edgelist=edgelist, width=1.0, alpha=0.5)
+    nx.draw_networkx_labels(G, pos, labels, font_size=16)
+    plt.axis('off')
+    print 'Labels:', labels
+    print 'Nodelist:', nodelist
+    print 'Edgelist:', edgelist
+    plt.show()
 
-    for key,values in graph.items():
+
+if __name__=="__main__":
+    
+    nodelist, edgelist = [], []
+    pathManager = PathManager()
+    
+    # Create and add nodes to the pathManager
+    for key,values in graphs.items():
         node = Node(key, values)
+        nodelist.append(key)
         pathManager.addNode(node)
+        for val in values:
+            edgelist.append((key, val))
 
     # Initialize population
-    pop = Population(pathManager, 100, True)
-    print "Intial " + pop.getFittest().getPath()
+    pop = Population(pathManager, 50, True)
+    print "Intial Fitness score: " + str(pop.getFittest().getFitness())
 
     # Evolve population for 100 generations
     ga = GA(pathManager)
@@ -264,4 +290,21 @@ if __name__=="__main__":
     for i in range(0, 100):
         pop = ga.evolvePopulation(pop)
 
-    print "Final Cycle: " + pop.getFittest().getPath()
+    print graphs
+    print "Final Fitness score: " + str(pop.getFittest().getFitness())
+    #draw_graph(nodelist, edgelist)
+    for node in pop.getFittest():
+        print node.getIndex(),
+    print 
+
+    nodelist, edgelist = [], []
+    for i in range(len(pop.getFittest())):
+        nodelist.append(pop.getFittest()[i].getIndex())
+        if i == len(pop.getFittest())-1:
+            edgelist.append((pop.getFittest()[i].getIndex(),
+                pop.getFittest()[0].getIndex()))
+        else:
+            edgelist.append((pop.getFittest()[i].getIndex(),
+                pop.getFittest()[i+1].getIndex()))
+    #draw_graph(nodelist, edgelist)
+
