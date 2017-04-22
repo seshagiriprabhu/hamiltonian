@@ -6,8 +6,24 @@ import random
 import matplotlib.pyplot as plt
 import networkx as nx
 
+nohc1 = {1: [2,3],
+        2: [1,3],
+        3: [1, 2, 4, 5],
+        4: [3, 6],
+        5: [3, 6],
+        6: [4, 5, 7, 8],
+        7: [6, 8],
+        8: [6, 7]}
 
-graphs = {1: [2, 4,5],
+nohc2 = {1: [2],
+        2: [3, 4,5],
+        3: [2,4,6],
+        4: [2,3,4, 5],
+        5: [2,4,6, 7],
+        6: [3,4,5],
+        7: [5]}
+
+graph0 = {1: [2, 4,5],
         2: [1, 3,5],
         3: [2,5,6],
         4: [1,7,5],
@@ -17,13 +33,18 @@ graphs = {1: [2, 4,5],
         8: [7,5,9],
         9: [8,5,6]}
 
-graph = {1: [2],
-        2: [3, 4,5],
-        3: [2,4,6],
-        4: [2,3,4, 5],
-        5: [2,4,6, 7],
-        6: [3,4,5],
-        7: [5]}
+graph1 = {1: [3, 5],
+        2: [4, 5],
+        3: [1, 4],
+        4: [2, 3],
+        5: [1, 2]}
+
+graph2 = {1: [2, 5, 6],
+        2: [1, 3, 4, 5],
+        3: [2, 4, 5],
+        4: [2, 3, 5],
+        5: [1, 2, 3, 4],
+        6: [1, 4]}
 
 class Node:
     def __init__(self, index=None, adj=[]):
@@ -111,7 +132,7 @@ class WalkOver:
         connection
         """
         last = self.getNode(len(self.path)-1)
-        first = self.getNode(0)
+        first = self.getNode(0).getIndex()
         if first in last.getAdjacent():
             return True
         else: return False
@@ -137,12 +158,17 @@ class WalkOver:
         score = 0
         if self.pathSize() == pathManager.numberOfNodes():
             score = score + 10
+        #    print 'a',
         if self.checkAllUnique():
             score = score + 10
+        #    print 'b',
         if self.checkLastElementCycle():
             score = score + 10
+        #    print 'c',
         if self.checkConnection():
             score = score + 10
+        #    print 'd',
+        #print
         return score
 
 
@@ -248,39 +274,18 @@ class GA:
         fittest = tournament.getFittest()
         return fittest
 
-def draw_graph(nodelist, edgelist):
-    labels = {}
-    for i in range(len(nodelist)): 
-        labels[i+1]=nodelist[i]
-    G=nx.Graph()
-    G.add_nodes_from(nodelist)
-    G.add_edges_from(edgelist)
-    pos=nx.spectral_layout(G)
-    nx.draw_networkx_nodes(G, pos, nodelist=nodelist, node_color='r', node_size=500, alpha=0.8)
-    nx.draw_networkx_edges(G, pos, edgelist=edgelist, width=1.0, alpha=0.5)
-    nx.draw_networkx_labels(G, pos, labels, font_size=16)
-    plt.axis('off')
-    print 'Labels:', labels
-    print 'Nodelist:', nodelist
-    print 'Edgelist:', edgelist
-    plt.show()
-
-
 if __name__=="__main__":
     
-    nodelist, edgelist = [], []
     pathManager = PathManager()
-    
+    G = graph2
     # Create and add nodes to the pathManager
-    for key,values in graphs.items():
+    for key,values in G.items():
         node = Node(key, values)
-        nodelist.append(key)
         pathManager.addNode(node)
-        for val in values:
-            edgelist.append((key, val))
 
     # Initialize population
-    pop = Population(pathManager, 50, True)
+    print 'Graph:', G
+    pop = Population(pathManager, 10, True)
     print "Intial Fitness score: " + str(pop.getFittest().getFitness())
 
     # Evolve population for 100 generations
@@ -290,21 +295,13 @@ if __name__=="__main__":
     for i in range(0, 100):
         pop = ga.evolvePopulation(pop)
 
-    print graphs
-    print "Final Fitness score: " + str(pop.getFittest().getFitness())
-    #draw_graph(nodelist, edgelist)
-    for node in pop.getFittest():
-        print node.getIndex(),
-    print 
-
-    nodelist, edgelist = [], []
-    for i in range(len(pop.getFittest())):
-        nodelist.append(pop.getFittest()[i].getIndex())
-        if i == len(pop.getFittest())-1:
-            edgelist.append((pop.getFittest()[i].getIndex(),
-                pop.getFittest()[0].getIndex()))
-        else:
-            edgelist.append((pop.getFittest()[i].getIndex(),
-                pop.getFittest()[i+1].getIndex()))
-    #draw_graph(nodelist, edgelist)
+    fittest = pop.getFittest()
+    if fittest.getFitness() == 1.0:
+        print "Final Fitness score: " + str(pop.getFittest().getFitness())
+        print "HC:",
+        for node in fittest:
+            print str(node.getIndex()) + '->',
+        print fittest[0].getIndex()
+    else: 
+        print "No Hamiltonian cycle in this graph"
 
