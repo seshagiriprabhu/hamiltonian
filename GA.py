@@ -1,10 +1,7 @@
 #!/usr/bin/env python2
-# https://gist.github.com/turbofart/3428880
 
 import math
 import random
-import matplotlib.pyplot as plt
-import networkx as nx
 
 nohc1 = {1: [2,3],
         2: [1,3],
@@ -22,6 +19,19 @@ nohc2 = {1: [2],
         5: [2,4,6, 7],
         6: [3,4,5],
         7: [5]}
+
+graph = {1: [2, 3, 4, 9],
+        2: [3, 7, 8, 9],
+        3: [1, 2, 5, 6, 7],
+        4: [1, 5, 9, 10],
+        5: [1, 3, 4, 6, 12],
+        6: [3, 5, 7, 11, 12],
+        7: [2, 3, 8, 11],
+        8: [2, 7, 9, 10, 11],
+        9: [1, 2, 4, 10],
+        10: [4, 8, 9, 11, 12],
+        11: [7, 8, 6, 10, 12],
+        12: [4, 5, 6, 10, 11]}
 
 graph0 = {1: [2, 4,5],
         2: [1, 3,5],
@@ -277,7 +287,7 @@ class GA:
 if __name__=="__main__":
     
     pathManager = PathManager()
-    G = graph2
+    G = graph1
     # Create and add nodes to the pathManager
     for key,values in G.items():
         node = Node(key, values)
